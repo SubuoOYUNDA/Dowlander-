@@ -1,128 +1,75 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+// Bu fonksiyon "Otomatik İndirme" tetikleyicisidir.
+function triggerDownload(url, filename) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'indirilen_dosya';
+    document.body.appendChild(a);
+    a.click(); // Sanki kullanıcı tıklamış gibi yapar
+    document.body.removeChild(a);
 }
 
-body {
-    font-family: 'Poppins', sans-serif;
-    background-color: #121212;
-    color: #ffffff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
+async function startDownload(type) {
+    const linkInput = document.getElementById('linkInput');
+    const statusArea = document.getElementById('statusArea');
+    const url = linkInput.value.trim();
 
-.container {
-    background: #1e1e1e;
-    padding: 2rem;
-    border-radius: 15px;
-    box-shadow: 0 0 20px rgba(0, 255, 127, 0.2);
-    width: 90%;
-    max-width: 500px;
-    text-align: center;
-}
+    if (!url) {
+        statusArea.innerText = "❌ Önce bir link yapıştır!";
+        statusArea.style.color = "red";
+        return;
+    }
 
-header h1 {
-    color: #00ff7f;
-    margin-bottom: 10px;
-}
+    statusArea.innerText = "⏳ Link işleniyor, indirme birazdan başlayacak...";
+    statusArea.style.color = "yellow";
 
-header p {
-    color: #b3b3b3;
-    font-size: 0.9rem;
-    margin-bottom: 20px;
-}
+    // Kanka burası API kısmı. 
+    // Cobalt.tools ücretsiz ve popüler bir API'dir.
+    // Eğer çalışmazsa "api.cobalt.tools" yerine başka bir public instance bulup yazman gerekir.
+    
+    const requestData = {
+        url: url,
+        vCodec: "h264",
+        vQuality: "720",
+        aFormat: "mp3",
+        isAudioOnly: type === 'audio' // MP3 istendiyse true olur
+    };
 
-.input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
+    try {
+        const response = await fetch('https://api.cobalt.tools/api/json', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
 
-input {
-    flex: 1;
-    padding: 12px;
-    border-radius: 8px;
-    border: 2px solid #333;
-    background: #2a2a2a;
-    color: white;
-    outline: none;
-    transition: 0.3s;
-}
+        const data = await response.json();
 
-input:focus {
-    border-color: #00ff7f;
-}
+        if (data.status === 'stream' || data.status === 'redirect') {
+            statusArea.innerText = "✅ İndirme başladı!";
+            statusArea.style.color = "#00ff7f";
+            
+            // İşte sihirli kod: Linki aldığı an indirmeyi tetikler.
+            triggerDownload(data.url, 'medya_dosyasi');
+            
+            // Bazı tarayıcılar (özellikle iOS) otomatik indirmeyi engellerse diye
+            // güvenlik önlemi olarak linki yeni sekmede de açmayı deneyebiliriz:
+            // window.location.href = data.url; 
+        } else if (data.status === 'picker') {
+            // Bazen birden fazla seçenek döner (video/ses ayrımı gibi)
+            statusArea.innerText = "✅ Dosya hazır, indiriliyor...";
+            data.picker.forEach(item => {
+                triggerDownload(item.url, 'dosya');
+            });
+        } else {
+            statusArea.innerText = "❌ Hata: " + (data.text || "Bilinmeyen hata");
+            statusArea.style.color = "red";
+        }
 
-select {
-    padding: 12px;
-    border-radius: 8px;
-    background: #2a2a2a;
-    color: white;
-    border: 2px solid #333;
-    cursor: pointer;
-}
-
-button {
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(45deg, #00ff7f, #00b85c);
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-button:hover {
-    transform: scale(1.02);
-}
-
-.hidden {
-    display: none;
-}
-
-#resultArea {
-    margin-top: 20px;
-    padding: 15px;
-    background: #252525;
-    border-radius: 8px;
-}
-
-.download-btn {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 10px 20px;
-    background: #ff0055;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    font-weight: bold;
-}
-
-.loader {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #00ff7f;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 1s linear infinite;
-    margin: 10px auto;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-footer {
-    margin-top: 20px;
-    font-size: 0.7rem;
-    color: #555;
+    } catch (error) {
+        console.error(error);
+        statusArea.innerText = "❌ Sunucu hatası veya link geçersiz.";
+        statusArea.style.color = "red";
+    }
 }
