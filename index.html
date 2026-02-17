@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Downloader - YouTube, Spotify, TikTok</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-bolt"></i> Hızlı İndirici</h1>
+            <p>YouTube, Instagram, TikTok ve Spotify linklerini yapıştır!</p>
+        </header>
+
+        <div class="input-group">
+            <input type="text" id="linkInput" placeholder="Video veya Müzik linkini buraya yapıştır...">
+            <select id="formatSelect">
+                <option value="mp4">MP4 (Video)</option>
+                <option value="mp3">MP3 (Ses)</option>
+            </select>
+        </div>
+
+        <button id="downloadBtn" onclick="startDownload()">
+            <i class="fas fa-download"></i> İndirmeyi Başlat
+        </button>
+
+        <div id="resultArea" class="hidden">
+            <p id="statusText">Lütfen bekleyin, link inceleniyor...</p>
+            <div class="loader" id="loader"></div>
+            <a id="downloadLink" href="#" target="_blank" class="download-btn hidden">DOSYAYI İNDİR</a>
+        </div>
+
+        <footer>
+            <p>GitHub üzerinde barındırılmaktadır. Eğitim amaçlıdır.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
